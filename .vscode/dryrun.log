@@ -1,0 +1,78 @@
+make.exe --dry-run --always-make --keep-going --print-directory
+make: Entering directory 'c:/Users/romaingue/Documents/rgb-panel-tesla'
+C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe -C ./lib
+ 
+make[1]: Entering directory 'c:/Users/romaingue/Documents/rgb-panel-tesla/lib'
+echo 'g++ -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11' | cmp -s - compiler-flags || echo 'g++ -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11' > compiler-flags
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o gpio.o gpio.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o led-matrix.o led-matrix.cc
+ 
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o options-initialize.o options-initialize.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o framebuffer.o framebuffer.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o thread.o thread.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o bdf-font.o bdf-font.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o graphics.o graphics.cc
+ 
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o led-matrix-c.o led-matrix-c.cc
+cc  -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -c -o hardware-mapping.o hardware-mapping.c
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o pixel-mapper.o pixel-mapper.cc
+ 
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o multiplex-mappers.o multiplex-mappers.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o content-streamer.o content-streamer.cc
+ar rcs librgbmatrix.a gpio.o led-matrix.o options-initialize.o framebuffer.o thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o pixel-mapper.o multiplex-mappers.o content-streamer.o
+g++ -shared -Wl,-soname,librgbmatrix.so.1 -o librgbmatrix.so.1 gpio.o led-matrix.o options-initialize.o framebuffer.o thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o pixel-mapper.o multiplex-mappers.o content-streamer.o -lpthread  -lrt -lm -lpthread
+make[1]: Leaving directory 'c:/Users/romaingue/Documents/rgb-panel-tesla/lib'
+ 
+C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe -C examples-api-use
+ 
+make[1]: Entering directory 'c:/Users/romaingue/Documents/rgb-panel-tesla/examples-api-use'
+g++ -I../include -Wall -O3 -g -Wextra -Wno-unused-parameter -c -o demo-main.o demo-main.cc
+C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe -C ../lib
+ 
+make[2]: Entering directory 'c:/Users/romaingue/Documents/rgb-panel-tesla/lib'
+echo 'g++ -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11' | cmp -s - compiler-flags || echo 'g++ -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11' > compiler-flags
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o gpio.o gpio.cc
+ 
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o led-matrix.o led-matrix.cc
+ 
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o options-initialize.o options-initialize.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o framebuffer.o framebuffer.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o thread.o thread.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o bdf-font.o bdf-font.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o graphics.o graphics.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o led-matrix-c.o led-matrix-c.cc
+ 
+cc  -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -c -o hardware-mapping.o hardware-mapping.c
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o pixel-mapper.o pixel-mapper.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o multiplex-mappers.o multiplex-mappers.cc
+g++ -I../include -W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC  -DDEFAULT_HARDWARE='"regular"' -fno-exceptions -std=c++11 -c -o content-streamer.o content-streamer.cc
+ 
+ar rcs librgbmatrix.a gpio.o led-matrix.o options-initialize.o framebuffer.o thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o pixel-mapper.o multiplex-mappers.o content-streamer.o
+g++ -shared -Wl,-soname,librgbmatrix.so.1 -o librgbmatrix.so.1 gpio.o led-matrix.o options-initialize.o framebuffer.o thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o pixel-mapper.o multiplex-mappers.o content-streamer.o -lpthread  -lrt -lm -lpthread
+make[2]: Leaving directory 'c:/Users/romaingue/Documents/rgb-panel-tesla/lib'
+ 
+g++ demo-main.o -o demo -L../lib -lrgbmatrix -lrt -lm -lpthread
+ 
+g++ -I../include -Wall -O3 -g -Wextra -Wno-unused-parameter -c -o minimal-example.o minimal-example.cc
+g++ minimal-example.o -o minimal-example -L../lib -lrgbmatrix -lrt -lm -lpthread
+cc -I../include -Wall -O3 -g -Wextra -Wno-unused-parameter -c -o c-example.o c-example.c
+cc c-example.o -o c-example -L../lib -lrgbmatrix -lrt -lm -lpthread -lstdc++
+ 
+g++ -I../include -Wall -O3 -g -Wextra -Wno-unused-parameter -c -o text-example.o text-example.cc
+g++ text-example.o -o text-example -L../lib -lrgbmatrix -lrt -lm -lpthread
+g++ -I../include -Wall -O3 -g -Wextra -Wno-unused-parameter -c -o scrolling-text-example.o scrolling-text-example.cc
+g++ scrolling-text-example.o -o scrolling-text-example -L../lib -lrgbmatrix -lrt -lm -lpthread
+ 
+g++ -I../include -Wall -O3 -g -Wextra -Wno-unused-parameter -c -o clock.o clock.cc
+g++ clock.o -o clock -L../lib -lrgbmatrix -lrt -lm -lpthread
+g++ -I../include -Wall -O3 -g -Wextra -Wno-unused-parameter -c -o ledcat.o ledcat.cc
+g++ ledcat.o -o ledcat -L../lib -lrgbmatrix -lrt -lm -lpthread
+ 
+g++ -I../include -Wall -O3 -g -Wextra -Wno-unused-parameter -c -o input-example.o input-example.cc
+g++ input-example.o -o input-example -L../lib -lrgbmatrix -lrt -lm -lpthread
+g++ -I../include -Wall -O3 -g -Wextra -Wno-unused-parameter -c -o pixel-mover.o pixel-mover.cc
+g++ pixel-mover.o -o pixel-mover -L../lib -lrgbmatrix -lrt -lm -lpthread
+make[1]: Leaving directory 'c:/Users/romaingue/Documents/rgb-panel-tesla/examples-api-use'
+ 
+make: Leaving directory 'c:/Users/romaingue/Documents/rgb-panel-tesla'
+ 
