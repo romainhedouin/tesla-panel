@@ -1057,7 +1057,7 @@ static int usage(const char *progname) {
 
 int main(int argc, char *argv[]) {
   int demo = -1;
-  int scroll_ms = 30;
+  int scroll_ms = -1;
 
   const char *demo_parameter = NULL;
   RGBMatrix::Options matrix_options;

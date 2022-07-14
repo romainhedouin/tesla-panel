@@ -24,7 +24,6 @@
 	font-size:15px;
 	padding:10px 36px;
 	text-decoration:none;
-	text-shadow:0px 1px 0px #b23e35;
     margin: 10px 0px;
 }
 .btn-light {
@@ -33,7 +32,11 @@
 .btn-dark {
     background-color:#b23e35;
 }
-.btn:hover {
+.btn-grey {
+    background-color:#8c8c8c;
+}
+.btn-light:active
+.btn-dark:active {
 	background-color:#eb675e;
 }
 .btn:active {
@@ -48,15 +51,14 @@
 <h1 style="text-align: center;">LED Control</h1>
 
 <!-- same thing but with a for loop -->
-<?php
-    $messages = array("Truc secret", "Carre qui tourne", "Ici y a rien j'avoue", "Horloge", "Machin");
-    $commands = array("on.sh", "test0.sh", "blink.sh", "clock.sh", "status.sh");
+<?php 
+    $messages = array("Bonjour !", "Carre qui tourne", "Merci", "Horloge", "Doublez-moi");
+    $commands = array("bonjour.sh", "test0.sh", "thanks.sh", "clock.sh", "overtake.sh");
 
     ## if $_GET['run'] is set and is one of the commands, run the corresponding script
     if (isset($_GET['run']) && in_array($_GET['run'], $commands)) {
         $command = $_GET['run'];
-        echo "<p>Running command: $command</p>";
-        exec("/bin/bash /home/pi/scripts/$command");
+        $pid = exec("/bin/bash /home/pi/src/$command &");
     }
 ?>
 <div class="container">
@@ -67,6 +69,8 @@
                 <?php echo $messages[$i]; ?>
             </a>
     <?php } ?>
+    <!-- RESET button -->
+    <a class="btn btn-grey" href="?run=reset.sh">RESET</a>
 </div>
 </body>
 </html>
