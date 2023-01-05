@@ -1,0 +1,11 @@
+[Unit]
+Description=teslabot
+
+[Service]
+User=root
+WorkingDirectory=/home/pi/
+ExecStart=/home/pi/teslabot
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+while true; do
+    echo "Tesla Bot Server starting..."
+    python /home/pi/bt_server.py
+    echo "Tesla Bot Server returned exit code $?. Respawning..." >&2
+    sleep 1
+done

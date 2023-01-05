@@ -13,8 +13,11 @@ alias ...="cd ../.."
 alias src="source ~/.bashrc"
 alias emacs="emacs -nw"
 alias ne="emacs -nw"
+alias rc="ne ~/.bashrc"
 alias ll="ls -l"
 alias la="ls -a"
+alias clean="find ~/ -name \"*~\" -delete ; find ~/ -name \"#*#\" -delete"
+alias cl="clean"
 
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
