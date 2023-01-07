@@ -1,8 +1,18 @@
 #!/bin/bash
 
+function activate_bluetooth() {
+    while true; do
+        bluetoothctl power on
+        bluetoothctl discoverable on
+        sleep 5
+    done
+}
+
+activate_bluetooth &
+
 while true; do
-    echo "Tesla Bot Server starting..."
-    python /home/pi/bt_server.py
-    echo "Tesla Bot Server returned exit code $?. Respawning..." >&2
+    echo "Tesla Bot server starting..."
+    sudo python /home/pi/bt_server.py
+    echo "Tesla Bot server returned exit code $?. Respawning..." >&2
     sleep 1
 done

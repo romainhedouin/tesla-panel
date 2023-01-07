@@ -1,18 +1,8 @@
 import bluetooth
 import os
 import signal
-import subprocess
-
-def enable_bluetooth():
-    subprocess.run(["bluetoothctl", "power", "on"])
-
-def make_discoverable():
-    subprocess.run(["bluetoothctl", "discoverable", "on"])
 
 pid_file = "/home/pi/bt_server.pid"
-
-enable_bluetooth()
-make_discoverable()
 
 # check if the pid file exists
 if os.path.exists(pid_file):
