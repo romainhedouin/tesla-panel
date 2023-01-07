@@ -7,7 +7,6 @@ import socket
 import os
 import signal
 import subprocess
-import uuid
 
 def enable_bluetooth():
     subprocess.run(["bluetoothctl", "power", "on"])
@@ -52,7 +51,7 @@ try:
                 os.popen("sh /home/pi/src/" + data.decode("utf-8") + ".sh")
                 os.popen("echo " + "sh /home/pi/src/" + data.decode("utf-8") + ".sh" + " >> /home/pi/bt_server.log")
             client.send(data)
-except:	
-    print("Closing socket")	
+except:
+    print("Closing socket")
     client.close()
     s.close()
