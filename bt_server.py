@@ -1,9 +1,4 @@
-"""
-A simple Python script to receive messages from a client over
-Bluetooth using Python sockets (with Python 3.3 or above).
-"""
-
-import socket
+import bluetooth
 import os
 import signal
 import subprocess
@@ -31,27 +26,40 @@ if os.path.exists(pid_file):
     except OSError:
         pass
 
-hostMACAddress = 'B8:27:EB:A5:89:A8' # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
-port = 5
-backlog = 1
-size = 1024
-s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-s.bind((hostMACAddress,port))
-s.listen(backlog)
-try:
-    # store the current process ID in the pid file
-    with open(pid_file, 'w') as f:
-        f.write(str(os.getpid()))
-    client, address = s.accept()
-    while 1:
-        data = client.recv(size)
-        if data:
-            print(data)
-            if os.path.exists("/home/pi/src/" + data.decode("utf-8") + ".sh"):
-                os.popen("sh /home/pi/src/" + data.decode("utf-8") + ".sh")
-                os.popen("echo " + "sh /home/pi/src/" + data.decode("utf-8") + ".sh" + " >> /home/pi/bt_server.log")
-            client.send(data)
-except:	
-    print("Closing socket")	
-    client.close()
-    s.close()
+server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+
+server_sock.bind(("",bluetooth.PORT_ANY))
+server_sock.listen(1)
+
+port = server_sock.getsockname()[1]
+
+uuid = "00001101-0000-1000-8000-00805F9B34FB"
+
+bluetooth.advertise_service( server_sock, "My Bluetooth Server",
+                   service_id = uuid,
+                   service_classes = [ uuid, bluetooth.SERIAL_PORT_CLASS ],
+                   profiles = [ bluetooth.SERIAL_PORT_PROFILE ])
+
+print("[+] Listening for incoming connections on RFCOMM channel %d" % port)
+
+client_sock, client_info = server_sock.accept()
+print("[+] Accepted connection from ", client_info)
+
+while True:
+    data = client_sock.recv(1024)
+    if len(data) == 0:
+        print("[-] No data received")
+    else:
+        print("[+] Received: %s" % data)
+        if os.path.exists("/home/pi/src/" + data.decode("utf-8") + ".sh"):
+            os.popen("sh /home/pi/src/" + data.decode("utf-8") + ".sh")
+            os.popen("echo " + "sh /home/pi/src/" + data.decode("utf-8") + ".sh" + " >> /home/pi/bt_server.log")
+    client_sock.send(data)
+    if data == "quit":
+        break
+
+print("[+] Disconnected")
+
+client_sock.close()
+server_sock.close()
+print("[+] All done")
