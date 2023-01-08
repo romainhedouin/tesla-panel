@@ -2,5 +2,5 @@
 
 sleep 3
 
-PID=`echo $!`
+PID=$!
 kill -9 $PID
