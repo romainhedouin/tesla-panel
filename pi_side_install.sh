@@ -11,8 +11,9 @@ sudo rm -rf initial_install.sh Pictures Downloads Desktop Public Videos Music Te
 ## Compile the C++ library for the LED matrix
 make -C /home/pi/rpi-rgb-led-matrix/
 
-sudo mv dbus-org.bluez.service /etc/systemd/system/
-sudo mv teslabot.service /etc/systemd/system/
+sudo mv conf/dbus-org.bluez.service /etc/systemd/system/
+sudo mv conf/teslabot.service /etc/systemd/system/
+sudo mv conf/wpa_supplicant.conf /etc/wpa_supplicant/
 sudo systemctl daemon-reload
 sudo systemctl restart bluetooth
 sudo systemctl enable teslabot.service
