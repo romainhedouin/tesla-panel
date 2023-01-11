@@ -1,17 +1,44 @@
 import bluetooth
 import os
 import signal
+from time import sleep
 
 pid_file = "/home/pi/bt_server.pid"
 
+def logger(command):
+    print(command)
+    with open("/home/pi/bt_server.log", "a") as f:
+        f.write(command + "\n")
+
 def legacy_command(client_sock, data):
     client_sock.send("legacy_command")
+    logger("[+] Sent: legacy_command")
     data = client_sock.recv(1024)
-    print("[+] Received: %s" % data)
+    client_sock.send("done")
+    logger("[+] Received: %s" % data)
     if os.path.exists("/home/pi/src/" + data.decode("utf-8") + ".sh"):
         os.popen("sh /home/pi/src/" + data.decode("utf-8") + ".sh")
-        os.popen("echo " + "sh /home/pi/src/" + data.decode("utf-8") + ".sh" + " >> /home/pi/bt_server.log")
+        logger("sh /home/pi/src/%s.sh" % data.decode("utf-8"))
 
+def image_command(client_sock, data):
+    image = None
+    client_sock.send("image_command")
+    data = client_sock.recv(1024)
+    while data.decode("utf-8") != "done":
+        image += data
+        client_sock.send("received")
+        data = client_sock.recv(1024)
+    logger("[+] Received: %s" % data)
+    ## Save the data to a temporary file
+    with open("/home/pi/temporary.ppm", "wb") as f:
+        f.write(data)
+    ## Display the image for 3 seconds, then kill the process
+    command = "./rpi-rgb-led-matrix/examples-api-use/demo --led-no-hardware-pulse /home/pi/temporary.ppm --led-gpio-mapping=adafruit-hat --led-cols=64 -D 1 &"
+    os.popen(command)
+    logger("Running: " + command)
+    sleep(3)
+    os.popen("killall demo")
+    logger("Running: killall demo")
 
 if __name__ == '__main__':
 
@@ -41,24 +68,26 @@ if __name__ == '__main__':
                     service_classes = [ uuid, bluetooth.SERIAL_PORT_CLASS ],
                     profiles = [ bluetooth.SERIAL_PORT_PROFILE ])
 
-    print("[+] Listening for incoming connections on RFCOMM channel %d" % port)
+    logger("[+] Listening for incoming connections on RFCOMM channel %d" % port)
 
     client_sock, client_info = server_sock.accept()
-    print("[+] Accepted connection from ", client_info)
 
     while True:
         data = client_sock.recv(1024)
         if len(data) == 0:
-            print("[-] No data received")
+            logger("[-] No data received")
         else:
             if data.decode("utf-8") == "legacy_command":
+                logger("[+] Received legacy command")
                 legacy_command(client_sock, data)
-        client_sock.send(data)
+            if data.decode("utf-8") == "image_command":
+                logger("[+] Received image command")
+                image_command(client_sock, data)
         if data == "quit":
             break
 
-    print("[+] Disconnected")
+    logger("[+] Disconnected")
 
     client_sock.close()
     server_sock.close()
-    print("[+] All done")
+    logger("[+] All done")
