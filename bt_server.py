@@ -13,17 +13,18 @@ def logger(command):
 
 def receive_data(client_sock):
     data = b""
-    fresh_data = client_sock.recv(1024)
+    chunk_size = 1024
+    fresh_data = client_sock.recv(chunk_size)
+    print(fresh_data)
     while fresh_data != b"DONE":
-        logger("[+] Received: %s" % fresh_data)
-        client_sock.send("ok...")
+        client_sock.send("ack")
         data += fresh_data
-        fresh_data = client_sock.recv(1024)
+        fresh_data = client_sock.recv(chunk_size)
+        print(fresh_data)
     client_sock.send("OK")
     return data
 
 def legacy_command(client_sock, data):
-    print("launching legacy_command")
     data = receive_data(client_sock)
     print(data.decode("utf-8"))
     if os.path.exists("/home/pi/src/" + data.decode("utf-8") + ".sh"):
