@@ -15,23 +15,21 @@ def receive_data(client_sock):
     data = b""
     chunk_size = 1024
     fresh_data = client_sock.recv(chunk_size)
-    print(fresh_data)
     while fresh_data != b"DONE":
         client_sock.send("ack")
         data += fresh_data
         fresh_data = client_sock.recv(chunk_size)
-        print(fresh_data)
     client_sock.send("OK")
     return data
 
-def legacy_command(client_sock, data):
+def legacy_command(client_sock):
     data = receive_data(client_sock)
     print(data.decode("utf-8"))
     if os.path.exists("/home/pi/src/" + data.decode("utf-8") + ".sh"):
         os.popen("sh /home/pi/src/" + data.decode("utf-8") + ".sh")
         logger("sh /home/pi/src/%s.sh" % data.decode("utf-8"))
 
-def image_command(client_sock, data):
+def image_command(client_sock):
     data = receive_data(client_sock)
     ## Save the data to a temporary file
     with open("/home/pi/temporary.ppm", "wb") as f:
@@ -40,7 +38,8 @@ def image_command(client_sock, data):
     command = "./rpi-rgb-led-matrix/examples-api-use/demo --led-no-hardware-pulse /home/pi/temporary.ppm --led-gpio-mapping=adafruit-hat --led-cols=64 -D 1 &"
     os.popen(command)
     logger("Running: " + command)
-    sleep(3)
+
+def kill():
     os.popen("killall demo")
     logger("Running: killall demo")
 
@@ -83,10 +82,13 @@ if __name__ == '__main__':
         else:
             if data.decode("utf-8") == "legacy_command":
                 logger("[+] Received legacy command")
-                legacy_command(client_sock, data)
+                legacy_command(client_sock)
             if data.decode("utf-8") == "image_command":
                 logger("[+] Received image command")
-                image_command(client_sock, data)
+                image_command(client_sock)
+            if data.decode("utf-8") == "kill":
+                logger("[+] Received kill command")
+                kill()
         if data == "quit":
             break
 
