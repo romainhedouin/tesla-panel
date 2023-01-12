@@ -7,28 +7,24 @@ pid_file = "/home/pi/bt_server.pid"
 
 def logger(command):
     print(command)
-    with open("/home/pi/bt_server.log", "a") as f:
-        f.write(command + "\n")
+    with open("/home/pi/bt_server.log", "w") as f:
+        f.write(command)
+        f.write("\n")
+
+def receive_data(client_sock):
+    received_data = client_sock.recv(1024)
+    logger("[+] Received: %s" % received_data)
+    client_sock.send("OK")
+    return received_data
 
 def legacy_command(client_sock, data):
-    client_sock.send("legacy_command")
-    logger("[+] Sent: legacy_command")
-    data = client_sock.recv(1024)
-    client_sock.send("done")
-    logger("[+] Received: %s" % data)
+    data = receive_data(client_sock)
     if os.path.exists("/home/pi/src/" + data.decode("utf-8") + ".sh"):
         os.popen("sh /home/pi/src/" + data.decode("utf-8") + ".sh")
         logger("sh /home/pi/src/%s.sh" % data.decode("utf-8"))
 
 def image_command(client_sock, data):
-    image = None
-    client_sock.send("image_command")
-    data = client_sock.recv(1024)
-    while data.decode("utf-8") != "done":
-        image += data
-        client_sock.send("received")
-        data = client_sock.recv(1024)
-    logger("[+] Received: %s" % data)
+    data = receive_data(client_sock)
     ## Save the data to a temporary file
     with open("/home/pi/temporary.ppm", "wb") as f:
         f.write(data)
@@ -68,12 +64,12 @@ if __name__ == '__main__':
                     service_classes = [ uuid, bluetooth.SERIAL_PORT_CLASS ],
                     profiles = [ bluetooth.SERIAL_PORT_PROFILE ])
 
-    logger("[+] Listening for incoming connections on RFCOMM channel %d" % port)
+    logger("[+] Listening for incoming connections on RFCOMM channel " + port.__str__())
 
     client_sock, client_info = server_sock.accept()
 
     while True:
-        data = client_sock.recv(1024)
+        data = receive_data(client_sock)
         if len(data) == 0:
             logger("[-] No data received")
         else:
