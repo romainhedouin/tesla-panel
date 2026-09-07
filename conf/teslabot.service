@@ -1,8 +1,10 @@
 [Unit]
 Description=teslabot
+After=bluetooth.target bluetooth.service
+Wants=bluetooth.target
 
 [Service]
-User=root
+User=pi
 WorkingDirectory=/home/pi/
 ExecStart=/home/pi/teslabot
 Restart=always

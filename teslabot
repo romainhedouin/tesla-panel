@@ -8,7 +8,16 @@ function activate_bluetooth() {
     done
 }
 
+function keep_pairing_agent_registered() {
+    while true; do
+        sudo bt-agent -c NoInputNoOutput
+        echo 'Pairing agent exited, restarting...' >&2
+        sleep 1
+    done
+}
+
 activate_bluetooth &
+keep_pairing_agent_registered &
 
 while true; do
     echo "Tesla Bot server starting..."
