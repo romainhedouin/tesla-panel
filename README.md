@@ -59,31 +59,26 @@ same name):
 RFCOMM is a reliable ordered stream, so the length prefix is all that's
 needed to find message boundaries - no sentinel value, no per-chunk acks.
 
-The matrix and its offscreen canvas are created once at process start and
-live for the whole process; every `COMMAND_IMAGE`/`COMMAND_KILL` is an atomic
-`SwapOnVSync` onto that same canvas rather than a process kill/respawn, which
-is what keeps updates flicker-free.
+Updates are flicker-free because `panel.py` creates the matrix and its
+canvas once at startup and reuses them for the whole process - each command
+does an atomic `SwapOnVSync` onto that same canvas, never a process
+kill/respawn.
 
 ## Bluetooth service registration
 
 `bt_profile.py` registers the RFCOMM service with BlueZ over D-Bus
-(`org.bluez.ProfileManager1.RegisterProfile`), not PyBluez's
-`advertise_service()`. That's a hard requirement, not a style choice:
-current BlueZ (5.82+, what Debian 13/trixie ships) removed the legacy
-`/var/run/sdp` socket interface that `advertise_service()` (and `sdptool`)
-depend on, so both fail unconditionally with `[Errno 2] No such file or
-directory` on this OS. And it has to be real SDP, not a shortcut around it -
-the Android app connects via `createRfcommSocketToServiceRecord(UUID)`,
-which looks up the RFCOMM channel through an actual SDP query at connect
-time, so the Pi genuinely needs a working SDP record, not just an open
-socket on a known channel.
-
-Registering through `ProfileManager1` also changes the connection-handling
-model: BlueZ owns the listening socket entirely and calls our exported
-`Profile1.NewConnection(device, fd, properties)` once per incoming
-connection with an already-connected fd, so there's no `listen()`/`accept()`
-in this codebase at all. Needs `python3-dbus` and `python3-gi` (installed by
-`pi_side_install.sh`).
+(`org.bluez.ProfileManager1.RegisterProfile`) instead of PyBluez's
+`advertise_service()` - see that file's module docstring for the full
+reasoning. Short version: current BlueZ (5.82+, what Debian 13/trixie ships)
+removed the legacy `/var/run/sdp` socket interface `advertise_service()`
+(and `sdptool`) depend on, so both fail outright on this OS; and it has to
+be a real SDP record, not a shortcut around one, because the Android app
+connects via `createRfcommSocketToServiceRecord(UUID)`, which looks up the
+RFCOMM channel through an actual SDP query at connect time. This also means
+BlueZ owns the listening socket - it hands our exported `Profile1` an
+already-connected fd per connection, so there's no `listen()`/`accept()`
+anywhere in this codebase. Needs `python3-dbus` and `python3-gi` (installed
+by `pi_side_install.sh`).
 
 ## Deployment
 
