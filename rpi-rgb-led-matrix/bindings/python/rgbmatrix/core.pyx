@@ -58,7 +58,7 @@ cdef class FrameCanvas(Canvas):
         if <void*>self.__canvas != NULL:
             self.__canvas = NULL
 
-    cdef cppinc.Canvas* __getCanvas(self) except *:
+    cdef cppinc.Canvas* __getCanvas(self) except +:
         if <void*>self.__canvas != NULL:
             return self.__canvas
         raise Exception("Canvas was destroyed or not initialized, you cannot use this object anymore")
@@ -216,7 +216,7 @@ cdef class RGBMatrix(Canvas):
         self.__matrix.Clear()
         del self.__matrix
 
-    cdef cppinc.Canvas* __getCanvas(self) except *:
+    cdef cppinc.Canvas* __getCanvas(self) except +:
         if <void*>self.__matrix != NULL:
             return self.__matrix
         raise Exception("Canvas was destroyed or not initialized, you cannot use this object anymore")

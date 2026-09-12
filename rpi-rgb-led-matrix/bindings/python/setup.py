@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 
 core_ext = Extension(
     name                = 'core',

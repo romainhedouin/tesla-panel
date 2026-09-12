@@ -62,10 +62,10 @@ is what keeps updates flicker-free.
 - The Pi's Bluetooth MAC is hardcoded on the Android side
   (`BluetoothClient.findDevice()`); replacing the Pi means updating that
   constant and rebuilding the app.
-- `pi_side_install.sh` is the from-scratch bootstrap (packages, sudoers,
+- On a fresh Pi: `./deploy.sh` from this repo copies it onto the Pi, then
+  `ssh teslapi` and run `./pi_side_install.sh` there (packages, sudoers,
   compiling `rpi-rgb-led-matrix` and its Python bindings, installing the
-  systemd unit). It's meant to be re-run in full only on a fresh Pi image -
-  most of its steps (package installs, sudoers) are no-ops if already done.
+  systemd unit). Safe to re-run - most of its steps are no-ops if already done.
 
 ## Troubleshooting
 
