@@ -5,6 +5,14 @@ over Bluetooth RFCOMM for commands from the
 [TeslaLED](https://github.com/romainhedouin/TeslaLED) Android app and drives
 the panel via [rpi-rgb-led-matrix](rpi-rgb-led-matrix/)'s Python bindings.
 
+`rpi-rgb-led-matrix/` is a git submodule pointing straight at
+[hzeller/rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix)
+(no local patches to carry - if that ever changes, fork it first rather
+than patching the submodule in place). Clone this repo with `git clone
+--recurse-submodules`, or run `git submodule update --init` afterwards if
+you already cloned without it - `deploy.sh` needs it checked out locally
+to have anything to rsync to the Pi.
+
 `bt_server.py` is the entry point, wiring together `protocol.py` (the wire
 protocol - hardware/transport agnostic, covered by `tests/`), `panel.py`
 (the RGBMatrix hardware wrapper) and `bt_profile.py` (BlueZ D-Bus service
