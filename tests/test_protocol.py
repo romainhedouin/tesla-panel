@@ -92,3 +92,15 @@ def test_handle_one_command_returns_false_on_disconnect(sockpair):
     a, b = sockpair
     a.close()
     assert handle_one_command(b, handlers={}, logger=lambda msg: None) is False
+
+
+def test_handle_one_command_drops_connection_on_oversized_length(sockpair):
+    # A header claiming an absurd payload length means the stream is
+    # desynced (corrupted header), not a legitimately huge command -
+    # previously this crashed with MemoryError trying to recv() that many
+    # bytes, wedging the client. Must drop the connection instead of
+    # attempting the read at all.
+    a, b = sockpair
+    a.sendall(struct.pack(HEADER_FORMAT, 0, 0xFFFFFFFF))
+
+    assert handle_one_command(b, handlers={}, logger=lambda msg: None) is False

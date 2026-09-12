@@ -20,6 +20,17 @@ STATUS_ERROR = b"\x01"
 HEADER_FORMAT = ">BI"  # 1 byte command type, 4 bytes big-endian payload length
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 
+# Far above the ~6.2KB a 64x32 PPM frame actually needs - a length past this
+# means the header itself is bogus (a corrupted/desynced stream), not a
+# legitimately large command. Attempting recv_exact() on a claimed length in
+# the millions/billions is exactly what crashed a connection's handler
+# thread with MemoryError in production: the client kept writing on a
+# socket nobody was reading from anymore, hanging the app until it was
+# force-restarted. There's no way to safely keep reading from a
+# desynchronized stream, so the fix is to drop the connection outright
+# rather than try to honor - or crash on - a clearly-invalid length.
+MAX_PAYLOAD_SIZE = 65536
+
 
 def recv_exact(sock, n):
     """Read exactly n bytes, looping over recv() since a single call isn't
@@ -68,6 +79,11 @@ def handle_one_command(sock, handlers, logger):
     if header is None:
         return False
     command_type, length = struct.unpack(HEADER_FORMAT, header)
+
+    if length > MAX_PAYLOAD_SIZE:
+        logger("[-] Payload length %d exceeds max %d (desynced stream?) - "
+               "dropping connection" % (length, MAX_PAYLOAD_SIZE))
+        return False
 
     payload = recv_exact(sock, length) if length else b""
     if payload is None:
