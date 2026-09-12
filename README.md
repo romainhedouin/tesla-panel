@@ -11,6 +11,17 @@ behavior change isn't live until you actually redeploy the changed file to
 the Pi** - nothing in this repo does that for you, and nothing checks that
 the Pi is still in sync with what's committed here.
 
+## Raspberry Pi OS install
+
+Only needed once, on a fresh/replacement SD card, before `pi_side_install.sh`.
+Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/):
+
+1. Choose **Raspberry Pi OS Lite (64-bit)** as the OS.
+2. Choose the SD card as the storage device - **be very careful you've
+   selected the right one**, this erases it.
+3. Follow the app's setup prompts (hostname, user, SSH, WiFi, locale) and
+   write.
+
 ## Wire protocol
 
 `bt_server.py` speaks a length-prefixed binary protocol, matched byte-for-byte
