@@ -59,4 +59,52 @@ sudo systemctl restart bluetooth
 sudo systemctl enable teslabot.service
 sudo systemctl start teslabot.service
 
+## Power tuning. This Pi is headless in a car - no HDMI/camera/DSI display is
+## ever connected and nothing uses onboard audio - so disable the hardware
+## auto-detect/circuits for them outright. Idempotent: replaces the line if
+## config.txt already has one (from raspi-config or a prior run of this
+## script) instead of appending a duplicate that would conflict with it.
+## PWR/ACT LEDs are deliberately left alone - keep those.
+set_boot_config() {
+  # $1: prefix identifying the existing line to replace (e.g. "dtparam=audio=")
+  # $2: the full replacement line
+  local match_prefix="$1" new_line="$2" file="/boot/firmware/config.txt"
+  if grep -q "^${match_prefix}" "$file"; then
+    sudo sed -i "s|^${match_prefix}.*|${new_line}|" "$file"
+  else
+    echo "${new_line}" | sudo tee -a "$file" > /dev/null
+  fi
+}
+set_boot_config "dtparam=audio=" "dtparam=audio=off"
+set_boot_config "camera_auto_detect=" "camera_auto_detect=0"
+set_boot_config "display_auto_detect=" "display_auto_detect=0"
+
+## eth0 is never plugged in on this install (WiFi + Bluetooth only), but
+## unlike audio/camera/display this one's a judgment call rather than a clear
+## win - it shares silicon with the external USB ports' hub, so how much
+## power bringing it down actually saves is uncertain. Ask instead of
+## assuming; an empty/non-interactive answer (e.g. this script re-run
+## non-interactively over ssh) defaults to leaving it alone.
+read -p "Disable the unused eth0 (Ethernet) interface? Small, uncertain power saving [y/N] " DISABLE_ETH
+if [[ "$DISABLE_ETH" =~ ^[Yy]$ ]]; then
+  sudo tee /etc/systemd/system/disable-eth0.service > /dev/null <<'UNIT'
+[Unit]
+Description=Bring down unused eth0 (headless project - WiFi + Bluetooth only)
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link set eth0 down
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now disable-eth0.service
+else
+  sudo systemctl disable --now disable-eth0.service 2>/dev/null || true
+  sudo rm -f /etc/systemd/system/disable-eth0.service
+fi
+
 rm -f /home/pi/deploy.sh
