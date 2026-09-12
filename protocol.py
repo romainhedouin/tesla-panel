@@ -5,7 +5,11 @@ without a compiled rgbmatrix extension or a real Bluetooth adapter.
 
 [1 byte command type][4 bytes big-endian payload length][payload]
 
-followed by a single status byte in response (STATUS_OK or STATUS_ERROR).
+followed by a response in the same shape, mirrored:
+[1 byte status][4 bytes big-endian message length][message, UTF-8]
+STATUS_OK's message is normally empty; STATUS_ERROR's message is a real,
+human-readable reason (what actually went wrong, not just "error") - the
+Android app surfaces it directly rather than guessing at a generic failure.
 Matched byte-for-byte by the Android app's BluetoothClient - see README.md.
 """
 import struct
@@ -14,11 +18,14 @@ COMMAND_IMAGE = 0
 COMMAND_KILL = 2
 COMMAND_SET_BRIGHTNESS = 3
 
-STATUS_OK = b"\x00"
-STATUS_ERROR = b"\x01"
+STATUS_OK = 0x00
+STATUS_ERROR = 0x01
 
 HEADER_FORMAT = ">BI"  # 1 byte command type, 4 bytes big-endian payload length
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
+
+RESPONSE_HEADER_FORMAT = ">BI"  # 1 byte status, 4 bytes big-endian message length
+RESPONSE_HEADER_SIZE = struct.calcsize(RESPONSE_HEADER_FORMAT)
 
 # Far above the ~6.2KB a 64x32 PPM frame actually needs - a length past this
 # means the header itself is bogus (a corrupted/desynced stream), not a
@@ -45,6 +52,14 @@ def recv_exact(sock, n):
     return buf
 
 
+def send_response(sock, status, message=""):
+    """Sends a status response, optionally with a human-readable message -
+    STATUS_ERROR should always include one (what actually went wrong), since
+    that's what the client surfaces to the user instead of a bare failure."""
+    encoded = message.encode("utf-8")
+    sock.sendall(struct.pack(RESPONSE_HEADER_FORMAT, status, len(encoded)) + encoded)
+
+
 def parse_ppm(data):
     """Minimal P6 PPM parser matching exactly what the Android app's
     PpmCodec.encode() produces: 'P6\\n<width> <height>\\n<maxval>\\n' then
@@ -52,21 +67,25 @@ def parse_ppm(data):
     the header may still contain a '#'-prefixed comment line - some of the
     bundled assets were exported from GIMP, which adds one - so those must
     be skipped like whitespace rather than parsed as a number."""
-    assert data[0:2] == b"P6"
-    pos = 2
-    values = []
-    while len(values) < 3:
-        while data[pos] in b" \t\r\n" or data[pos:pos + 1] == b"#":
-            if data[pos:pos + 1] == b"#":
-                while data[pos] not in b"\r\n":
+    if data[0:2] != b"P6":
+        raise ValueError("Malformed image data (missing P6 header)")
+    try:
+        pos = 2
+        values = []
+        while len(values) < 3:
+            while data[pos] in b" \t\r\n" or data[pos:pos + 1] == b"#":
+                if data[pos:pos + 1] == b"#":
+                    while data[pos] not in b"\r\n":
+                        pos += 1
+                else:
                     pos += 1
-            else:
+            start = pos
+            while data[pos] not in b" \t\r\n":
                 pos += 1
-        start = pos
-        while data[pos] not in b" \t\r\n":
-            pos += 1
-        values.append(int(data[start:pos]))
-    pos += 1  # single whitespace byte separating header from pixel data
+            values.append(int(data[start:pos]))
+        pos += 1  # single whitespace byte separating header from pixel data
+    except IndexError:
+        raise ValueError("Malformed image data (truncated header)")
     width, height, _maxval = values
     return width, height, data[pos:pos + width * height * 3]
 
@@ -91,14 +110,16 @@ def handle_one_command(sock, handlers, logger):
 
     handler = handlers.get(command_type)
     if handler is None:
-        logger("[-] Unknown command type: %d" % command_type)
-        sock.send(STATUS_ERROR)
+        message = "Unknown command type: %d" % command_type
+        logger("[-] " + message)
+        send_response(sock, STATUS_ERROR, message)
         return True
 
     try:
         handler(payload)
-        sock.send(STATUS_OK)
+        send_response(sock, STATUS_OK)
     except Exception as e:
-        logger("[-] Command %d failed: %s" % (command_type, e))
-        sock.send(STATUS_ERROR)
+        message = str(e) or "%s" % type(e).__name__
+        logger("[-] Command %d failed: %s" % (command_type, message))
+        send_response(sock, STATUS_ERROR, message)
     return True

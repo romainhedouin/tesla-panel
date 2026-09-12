@@ -46,9 +46,13 @@ by the Android app's `BluetoothClient`/`AGENTS.md`:
 [1 byte command type][4 bytes big-endian payload length][payload]
 ```
 
-followed by a single status byte in response (`0x00` = OK, anything else =
-error). Command types (kept in sync with the Android app's constants of the
-same name):
+followed by a response in the same shape, mirrored - `[1 byte status][4
+bytes big-endian message length][message, UTF-8]`. `0x00` is OK (message
+normally empty); anything else is an error, with the message carrying the
+Pi's own explanation of what went wrong - the Android app surfaces that
+text directly (e.g. as an "ERROR: ..." toast) instead of guessing at a
+generic failure reason. Command types (kept in sync with the Android app's
+constants of the same name):
 
 | Command                 | Value | Payload                                  |
 |--------------------------|-------|-------------------------------------------|

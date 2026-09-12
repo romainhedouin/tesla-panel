@@ -5,6 +5,8 @@ import pytest
 
 from protocol import (
     HEADER_FORMAT,
+    RESPONSE_HEADER_FORMAT,
+    RESPONSE_HEADER_SIZE,
     STATUS_ERROR,
     STATUS_OK,
     handle_one_command,
@@ -23,6 +25,14 @@ def sockpair():
 
 def send_command(sock, command_type, payload=b""):
     sock.sendall(struct.pack(HEADER_FORMAT, command_type, len(payload)) + payload)
+
+
+def recv_response(sock):
+    """Reads a [status][length][message] response, returning (status, message)."""
+    header = recv_exact(sock, RESPONSE_HEADER_SIZE)
+    status, length = struct.unpack(RESPONSE_HEADER_FORMAT, header)
+    message = recv_exact(sock, length) if length else b""
+    return status, message.decode("utf-8")
 
 
 def test_recv_exact_reassembles_chunked_writes(sockpair):
@@ -57,6 +67,16 @@ def test_parse_ppm_skips_comment_line():
     assert data == pixels
 
 
+def test_parse_ppm_rejects_missing_p6_header():
+    with pytest.raises(ValueError, match="P6"):
+        parse_ppm(b"not a ppm at all")
+
+
+def test_parse_ppm_rejects_truncated_header():
+    with pytest.raises(ValueError, match="truncated"):
+        parse_ppm(b"P6\n2 1")
+
+
 def test_handle_one_command_dispatches_and_replies_ok(sockpair):
     a, b = sockpair
     received = []
@@ -65,7 +85,9 @@ def test_handle_one_command_dispatches_and_replies_ok(sockpair):
 
     assert handle_one_command(b, handlers, logger=lambda msg: None) is True
     assert received == [b"hello"]
-    assert a.recv(1) == STATUS_OK
+    status, message = recv_response(a)
+    assert status == STATUS_OK
+    assert message == ""
 
 
 def test_handle_one_command_unknown_command_replies_error(sockpair):
@@ -73,7 +95,9 @@ def test_handle_one_command_unknown_command_replies_error(sockpair):
     send_command(a, 99)
 
     assert handle_one_command(b, handlers={}, logger=lambda msg: None) is True
-    assert a.recv(1) == STATUS_ERROR
+    status, message = recv_response(a)
+    assert status == STATUS_ERROR
+    assert "99" in message
 
 
 def test_handle_one_command_handler_exception_replies_error(sockpair):
@@ -85,7 +109,9 @@ def test_handle_one_command_handler_exception_replies_error(sockpair):
     send_command(a, 1, b"x")
 
     assert handle_one_command(b, {1: boom}, logger=lambda msg: None) is True
-    assert a.recv(1) == STATUS_ERROR
+    status, message = recv_response(a)
+    assert status == STATUS_ERROR
+    assert message == "nope"
 
 
 def test_handle_one_command_returns_false_on_disconnect(sockpair):
