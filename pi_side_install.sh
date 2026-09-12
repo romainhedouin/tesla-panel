@@ -21,15 +21,17 @@ sudo visudo -c
 ## python3-setuptools: needed to build the rpi-rgb-led-matrix Python bindings
 ##   (their setup.py uses the setuptools-compatible API - distutils itself was
 ##   removed in Python 3.12+, which is what current Raspberry Pi OS ships).
-## python3-bluez: the apt package for pybluez - `pip install pybluez` refuses
-##   to run on this system (PEP 668 "externally managed environment"), and
-##   fighting that with --break-system-packages is worse than just using the
-##   real Debian package.
+## python3-dbus, python3-gi: bt_server.py registers its RFCOMM/SDP service
+##   with BlueZ over D-Bus (org.bluez.ProfileManager1) - see bt_profile.py.
+##   PyBluez's old advertise_service()/sdptool-based approach no longer works
+##   at all on this BlueZ version (5.82+ removed the legacy /var/run/sdp
+##   socket interface both of those depend on).
+## bluez-tools: provides bt-agent, used by ./teslabot for pairing.
 ## cython3, python3-pil: rgbmatrix's Python bindings need both - see below.
 sudo apt-get update
 sudo apt-get install -y python3-pip python3-dev libpython3-dev \
-  python3-setuptools bluetooth libbluetooth-dev bluez-tools python3-bluez \
-  cython3 python3-pil
+  python3-setuptools bluetooth libbluetooth-dev bluez-tools \
+  python3-dbus python3-gi cython3 python3-pil
 sudo raspi-config nonint do_wifi_country FR
 
 ## Compile the C++ library for the LED matrix, plus the Python bindings.
@@ -53,12 +55,10 @@ make -C /home/pi/rpi-rgb-led-matrix/
 make -C /home/pi/rpi-rgb-led-matrix/bindings/python build-python PYTHON=$(which python3)
 sudo make -C /home/pi/rpi-rgb-led-matrix/bindings/python install-python PYTHON=$(which python3)
 
-sudo mv conf/dbus-org.bluez.service /etc/systemd/system/
 sudo mv conf/teslabot.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl restart bluetooth
 sudo systemctl enable teslabot.service
 sudo systemctl start teslabot.service
-sudo sdptool add SP
 
 rm -f /home/pi/deploy.sh

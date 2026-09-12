@@ -5,11 +5,18 @@ over Bluetooth RFCOMM for commands from the
 [TeslaLED](https://github.com/romainhedouin/TeslaLED) Android app and drives
 the panel via [rpi-rgb-led-matrix](rpi-rgb-led-matrix/)'s Python bindings.
 
-There is no CI/CD here: `bt_server.py` and `teslabot` are copied by hand onto
-the Pi's home directory (`/home/pi/`) and run via systemd. **A protocol or
-behavior change isn't live until you actually redeploy the changed file to
-the Pi** - nothing in this repo does that for you, and nothing checks that
-the Pi is still in sync with what's committed here.
+`bt_server.py` is the entry point, wiring together `protocol.py` (the wire
+protocol - hardware/transport agnostic, covered by `tests/`), `panel.py`
+(the RGBMatrix hardware wrapper) and `bt_profile.py` (BlueZ D-Bus service
+registration).
+
+There is no CI/CD deploying to the Pi itself: these files are copied by hand
+onto the Pi's home directory (`/home/pi/`) and run via systemd. **A protocol
+or behavior change isn't live until you actually redeploy the changed file
+to the Pi** - nothing in this repo does that for you, and nothing checks
+that the Pi is still in sync with what's committed here. `tests/` (`python3
+-m pytest tests/`) only exercises `protocol.py`, so it catches wire-format
+regressions but nothing hardware- or Bluetooth-related.
 
 ## Raspberry Pi OS install
 
@@ -48,6 +55,27 @@ The matrix and its offscreen canvas are created once at process start and
 live for the whole process; every `COMMAND_IMAGE`/`COMMAND_KILL` is an atomic
 `SwapOnVSync` onto that same canvas rather than a process kill/respawn, which
 is what keeps updates flicker-free.
+
+## Bluetooth service registration
+
+`bt_profile.py` registers the RFCOMM service with BlueZ over D-Bus
+(`org.bluez.ProfileManager1.RegisterProfile`), not PyBluez's
+`advertise_service()`. That's a hard requirement, not a style choice:
+current BlueZ (5.82+, what Debian 13/trixie ships) removed the legacy
+`/var/run/sdp` socket interface that `advertise_service()` (and `sdptool`)
+depend on, so both fail unconditionally with `[Errno 2] No such file or
+directory` on this OS. And it has to be real SDP, not a shortcut around it -
+the Android app connects via `createRfcommSocketToServiceRecord(UUID)`,
+which looks up the RFCOMM channel through an actual SDP query at connect
+time, so the Pi genuinely needs a working SDP record, not just an open
+socket on a known channel.
+
+Registering through `ProfileManager1` also changes the connection-handling
+model: BlueZ owns the listening socket entirely and calls our exported
+`Profile1.NewConnection(device, fd, properties)` once per incoming
+connection with an already-connected fd, so there's no `listen()`/`accept()`
+in this codebase at all. Needs `python3-dbus` and `python3-gi` (installed by
+`pi_side_install.sh`).
 
 ## Deployment
 
