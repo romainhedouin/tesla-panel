@@ -142,6 +142,26 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-out.stream
 ```
 
+##### Stream Notes
+When creating a stream (Using the `-O` option), some options are ignored.  
+When viewing a stream, some options are also ignored.  
+Furthermore, when viewing a stream, some options must match those used when the stream was created.  
+This table lists (Currently incomplete) those options.  
+IS = Ignored on create, IP = ignored on play, MM = must match
+
+| Option  | IC | IP | MM |
+| ------------- | ------------- | --- | --- |
+| --led-rows  | | | X |
+| --led-columns  | | | X |
+| --led-chain  | | | X |
+| --led-parallel | | | X |
+| -l | X | | |
+| --led-row-addr-type | X | | |
+| --led-pwm-dither-bits | X | | |
+| --led-pwm-lsb-nanoseconds | X | | |
+| --led-pwm-bits | X | | |
+| --led-brightness |  | X | |
+
 ### Text Scroller ###
 
 The text scroller allows to show some scrolling text.
@@ -222,6 +242,56 @@ sudo ./text-scroller -f ../fonts/9x18.bdf -B0,0,255 -O0,0,100 -C255,0,0 --led-ch
 sudo ./text-scroller -f ../fonts/texgyre-27.bdf --led-chain=4 -y-11 "Large Font"
 ```
 
+### Frame Sequence Player ###
+
+`frame-sequence-player` can either:
+
+1. Load and play an image/animation through the in-memory FrameSequence API.
+2. Export an image/animation to a `.fseq` file for fast later playback.
+3. Load and play an existing `.fseq` file.
+
+##### Building
+
+The utility requires GraphicsMagick, similar to `led-image-viewer`:
+
+```bash
+sudo apt-get update
+sudo apt-get install libgraphicsmagick++-dev libwebp-dev -y
+make frame-sequence-player
+```
+
+##### Usage
+
+```bash
+./frame-sequence-player [led-matrix-options] <image-or-fseq> [-O<output.fseq> | -O <output.fseq>]
+```
+
+##### Examples
+
+```bash
+# Play an image or animated gif
+sudo ./frame-sequence-player animation.gif
+
+# Convert gif to .fseq (no root needed for file conversion)
+./frame-sequence-player animation.gif -Oanimation.fseq
+
+# Play a prebuilt .fseq
+sudo ./frame-sequence-player animation.fseq
+```
+
+While playing, keyboard controls are available when stdin is a tty:
+
+- `+` / `=` increase brightness
+- `-` / `_` decrease brightness
+- `q` quit
+
+#### FrameSequence notes
+When outputting an `.fseq` file (Using `-O`), only options which govern geometry are important, ie  
+--led-cols  
+--led-rows  
+--led-chain  
+--led-parallel  
+
 ### Video Viewer ###
 
 The video viewer allows to play common video formats on the RGB matrix (just
@@ -265,7 +335,7 @@ built with `make video-viewer`.
 
 ```
 sudo apt-get update
-sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev libavdevice-dev
 make video-viewer
 ```
 
@@ -308,6 +378,24 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 -T2 myvideo.webm
 # Let's fix the refresh rate to 200 and sync a new frame with every
 # 8th refresh to get the desired video fps (200/8 = 25)
 sudo ./video-viewer --led-chain=4 --led-parallel=3 --led-limit-refresh=200 -V8 myvideo.webm
+
+# Output a webcam. Since /dev/video0 is usually not readable by the user
+# the privileges are dropped to ('daemon'), in the simplest case, just
+# switch of privilege dropping.
+# (Note, reading from a camerea device and scaling it then writing to the LED
+#  panel might create enough contention on the Pi memory busses that slight
+#  flicker might be noticeable)
+sudo ./video-viewer --led-chain=5 --led-parallel=3 --led-no-drop-privs /dev/video0
+
+# Often, webcam camera streams are pretty large which need to be scaled
+# in the video viewer. Reading large amounts of data from USB and scaling are
+# known to result in flickering on the matrix, so setting the video resolution
+# as close as possible using the video4linux utils can reduce the impact.
+# Consider you have an RGB panel with 160x96 pixels, use `v4l2-ctl` for an best
+# effort to pre-scale the video. Use the `-v` verbose option on the
+# video-viewer to see some meta-data about the stream it receives:
+v4l2-ctl -d /dev/video0 --set-fmt-video=width=160,height=96
+sudo ./video-viewer -v --led-chain=5 --led-parallel=3 --led-no-drop-privs /dev/video0
 ```
 
 **Example preparing a preprocessed stream**

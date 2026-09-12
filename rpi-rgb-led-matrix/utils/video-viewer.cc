@@ -34,6 +34,7 @@ extern "C" {
 #  include <libavformat/avformat.h>
 #  include <libavutil/imgutils.h>
 #  include <libswscale/swscale.h>
+#  include <libavdevice/avdevice.h>
 }
 
 #include <fcntl.h>
@@ -264,6 +265,7 @@ int main(int argc, char *argv[]) {
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 9, 100)
   av_register_all();
 #endif
+  avdevice_register_all();
   avformat_network_init();
 
   signal(SIGTERM, InterruptHandler);
@@ -292,7 +294,7 @@ int main(int argc, char *argv[]) {
       // Find the first video stream
       int videoStream = -1;
       AVCodecParameters *codec_parameters = NULL;
-      AVCodec *av_codec = NULL;
+      const AVCodec *av_codec = NULL;
       for (int i = 0; i < (int)format_context->nb_streams; ++i) {
         codec_parameters = format_context->streams[i]->codecpar;
         av_codec = avcodec_find_decoder(codec_parameters->codec_id);
@@ -303,7 +305,7 @@ int main(int argc, char *argv[]) {
         }
       }
       if (videoStream == -1)
-        return false;
+        return 1;
 
       // Frames per second; calculate wait time between frames.
       AVStream *const stream = format_context->streams[videoStream];
@@ -447,7 +449,6 @@ int main(int argc, char *argv[]) {
 
       av_frame_free(&output_frame);
       av_frame_free(&decode_frame);
-      avcodec_close(codec_context);
       avformat_close_input(&format_context);
     }
   } while (multiple_video_forever && !interrupt_received);

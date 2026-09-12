@@ -1,9 +1,20 @@
+# c++
 *.o
 *.a
 *~
 *.so
-# Cython output - regenerated from the .pyx source at install time (see
-# pi_side_install.sh) rather than committed, so it always matches whatever
-# Cython/Python is actually on the build machine instead of going stale.
+
+# env
+.envrc
+.direnv
+
+# python
+__pycache__/
+
+# CMake writes these here (bindings/python/rgbmatrix/{core,graphics}.cpp) as
+# part of `pip install .` from the repo root - regenerated from the .pyx
+# source on every build, not committed, so it always matches whatever
+# Cython/Python actually built it instead of going stale.
 bindings/python/rgbmatrix/core.cpp
 bindings/python/rgbmatrix/graphics.cpp
+build/

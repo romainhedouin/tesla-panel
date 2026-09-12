@@ -29,6 +29,7 @@
 #include "canvas.h"
 #include "thread.h"
 #include "pixel-mapper.h"
+#include "graphics.h"
 
 namespace rgb_matrix {
 class RGBMatrix;
@@ -154,6 +155,10 @@ public:
     // Limit refresh rate of LED panel. This will help on a loaded system
     // to keep a constant refresh rate. <= 0 for no limit.
     int limit_refresh_rate_hz;   // Flag: --led-limit-refresh
+
+    // Sleep instead of busy wait to free CPU cycles but get slightly less
+    // accurate frame timing.
+    bool disable_busy_waiting;   // Flag: --led-busy-waiting
   };
 
   // Factory to create a matrix. Additional functionality includes dropping
@@ -202,7 +207,7 @@ public:
   // -- Double- and Multibuffering.
 
   // Create a new buffer to be used for multi-buffering. The returned new
-  // Buffer implements a Canvas with the same size of thie RGBMatrix.
+  // Buffer implements a Canvas with the same size as this RGBMatrix.
   // You can use it to draw off-screen on it, then swap it with the active
   // buffer using SwapOnVSync(). That would be classic double-buffering.
   //
@@ -377,9 +382,12 @@ public:
   virtual int height() const;
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue);
+  virtual void SetPixels(int x, int y, int width, int height,
+                         Color *colors);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
-
+  virtual void SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue);
+  
 private:
   friend class RGBMatrix;
 
@@ -396,15 +404,16 @@ struct RuntimeOptions {
   RuntimeOptions();
 
   int gpio_slowdown;    // 0 = no slowdown.    Flag: --led-slowdown-gpio
+  int rp1_pio;          // 0 = default RP1 RIO. 1 = RP1 PIO. Flag: --led-rp1-pio
 
   // ----------
   // If the following options are set to disabled with -1, they are not
   // even offered via the command line flags.
   // ----------
 
-  // Thre are three possible values here
-  //   -1 : don't leave choise of becoming daemon to the command line
+  //   -1 : don't leave choice of becoming daemon to the command line
   //        parsing. If set to -1, the --led-daemon option is not offered.
+  //    0 : do not become a daemon, run in foreground (default value)
   //    0 : do not becoma a daemon, run in forgreound (default value)
   //    1 : become a daemon, run in background.
   //
@@ -473,8 +482,8 @@ int main(int argc, char **argv) {
 */
 // This parses the flags from argv and updates the structs with the parsed-out
 // values. Structs can be NULL if you are not interested in it.
-//
-// The recongized flags are removed from argv if "remove_consumed_flags" is
+// The recognized flags are removed from argv if "remove_consumed_flags" is
+// The recognized flags are removed from argv if "remove_consumed_flags" is
 // true; this simplifies your command line processing for the remaining options.
 //
 // Returns 'true' on success, 'false' if there was flag parsing problem.
