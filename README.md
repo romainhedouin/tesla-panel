@@ -18,6 +18,9 @@ protocol - hardware/transport agnostic, covered by `tests/`), `panel.py`
 (the RGBMatrix hardware wrapper) and `bt_profile.py` (BlueZ D-Bus service
 registration).
 
+`esp32/` is an in-progress port to run instead of the Pi - see its own
+README for status (compile-verified only, no hardware yet).
+
 There is no CI/CD deploying to the Pi itself: these files are copied by hand
 onto the Pi's home directory (`/home/pi/`) and run via systemd. **A protocol
 or behavior change isn't live until you actually redeploy the changed file
