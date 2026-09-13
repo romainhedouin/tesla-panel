@@ -38,10 +38,11 @@ regressions but nothing hardware- or Bluetooth-related.
 - [Adafruit HUB75 HAT](https://www.amazon.fr/dp/B00SK69C6E?ref=ppx_yo2ov_dt_b_fed_asin_title)
 - [Raspberry Pi 3/3B+ case](https://www.amazon.fr/dp/B09H6KR3JP?ref=ppx_yo2ov_dt_b_fed_asin_title)
   - Had to file off the plastic cover latches to fit the HAT
-- [Power cable for the HAT](https://www.amazon.fr/dp/B07KFTPF4C?ref=ppx_yo2ov_dt_b_fed_asin_title)
+- [5.5x2.1mm power cable for the HAT](https://www.amazon.fr/dp/B07KFTPF4C?ref=ppx_yo2ov_dt_b_fed_asin_title)
   - Downsides: thin (22 AWG) and long (2m) - thinner/longer cables drop more
     voltage under load, risking under-voltage and visible brightness
     variability. Prefer shorter, thicker cables.
+  - If buying today, [this one](https://www.amazon.fr/dp/B0FPKWNFLN/ref=sspa_dk_detail_5) instead
 - Micro-USB cable for the Pi (USB-C on more recent models)
 - M3 screws + washers
 - Mounting brackets - the Tesla Model 3's rear window is laterally sloped
