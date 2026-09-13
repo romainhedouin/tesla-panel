@@ -42,7 +42,7 @@ regressions but nothing hardware- or Bluetooth-related.
   - Downsides: thin (22 AWG) and long (2m) - thinner/longer cables drop more
     voltage under load, risking under-voltage and visible brightness
     variability. Prefer shorter, thicker cables.
-  - If buying today, [this one](https://www.amazon.fr/dp/B0FPKWNFLN/ref=sspa_dk_detail_5) instead
+  - If buying today, would try [this one](https://www.amazon.fr/dp/B0FPKWNFLN/ref=sspa_dk_detail_5) instead - still 22 AWG, but half the length, which is plenty
 - Micro-USB cable for the Pi (USB-C on more recent models)
 - M3 screws + washers
 - Mounting brackets - the Tesla Model 3's rear window is laterally sloped
