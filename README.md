@@ -39,7 +39,9 @@ regressions but nothing hardware- or Bluetooth-related.
 - [Raspberry Pi 3/3B+ case](https://www.amazon.fr/dp/B09H6KR3JP?ref=ppx_yo2ov_dt_b_fed_asin_title)
   - Had to file off the plastic cover latches to fit the HAT
 - [Power cable for the HAT](https://www.amazon.fr/dp/B07KFTPF4C?ref=ppx_yo2ov_dt_b_fed_asin_title)
-  - Downsides: thin (22 AWG) and long (2m)
+  - Downsides: thin (22 AWG) and long (2m) - thinner/longer cables drop more
+    voltage under load, risking under-voltage and visible brightness
+    variability. Prefer shorter, thicker cables.
 - Micro-USB cable for the Pi (USB-C on more recent models)
 - M3 screws + washers
 - Mounting brackets - the Tesla Model 3's rear window is laterally sloped
@@ -51,6 +53,10 @@ regressions but nothing hardware- or Bluetooth-related.
   - Mount onto the metal sheet below
 - 6x16cm metal sheet with holes
   - Unclear original purpose - used here as an anchor point for the magnets
+- A soldering iron, to solder the HAT onto the Pi
+  - Easy job, just make sure to solder it the right way around or you'll
+    have the delightful pleasure of learning to unsolder and re-solder all
+    40 tiny little pins... ask how I know...
 
 ## Raspberry Pi OS install
 
