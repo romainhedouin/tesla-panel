@@ -26,6 +26,8 @@ import dbus.mainloop.glib
 import dbus.service
 from gi.repository import GLib
 
+from bt_retry import MAX_ATTEMPTS, RETRY_DELAY_S, not_ready_message
+
 SERIAL_PORT_UUID = "00001101-0000-1000-8000-00805f9b34fb"
 PROFILE_PATH = "/com/teslaled/profile"
 PROFILE_MANAGER_IFACE = "org.bluez.ProfileManager1"
@@ -73,7 +75,7 @@ class SerialPortProfile(dbus.service.Object):
         self.logger("[bt] Disconnection requested for %s" % device)
 
 
-def register(on_connection, logger, channel=1, retry_delay_s=1, max_attempts=30):
+def register(on_connection, logger, channel=1, retry_delay_s=RETRY_DELAY_S, max_attempts=MAX_ATTEMPTS):
     """Registers the profile and returns (mainloop, profile) - call
     mainloop.run(), and keep `profile` referenced for as long as the
     mainloop runs (nothing else holds a strong reference to it, and a
@@ -108,8 +110,7 @@ def register(on_connection, logger, channel=1, retry_delay_s=1, max_attempts=30)
         except dbus.exceptions.DBusException as e:
             if attempt == max_attempts:
                 raise
-            logger("[-] Bluetooth adapter not ready yet (%s), retrying (%d/%d)..."
-                   % (e, attempt, max_attempts))
+            logger(not_ready_message("Bluetooth adapter", e, attempt, max_attempts))
             time.sleep(retry_delay_s)
 
     logger("[+] Registered SDP/RFCOMM profile on channel %d" % channel)

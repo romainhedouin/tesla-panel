@@ -20,6 +20,7 @@ import dbus.mainloop.glib
 import dbus.service
 from gi.repository import GLib
 
+from bt_retry import MAX_ATTEMPTS, RETRY_DELAY_S, not_ready_message
 from protocol import (
     HEADER_FORMAT,
     HEADER_SIZE,
@@ -239,7 +240,7 @@ class Advertisement(dbus.service.Object):
         pass
 
 
-def register(handlers, logger, retry_delay_s=1, max_attempts=30):
+def register(handlers, logger, retry_delay_s=RETRY_DELAY_S, max_attempts=MAX_ATTEMPTS):
     """Registers the GATT application and starts advertising. Returns
     (app, advertisement) immediately - keep both referenced for as long as
     the process runs, same reason as bt_profile.register()'s `profile`
@@ -288,8 +289,7 @@ def register(handlers, logger, retry_delay_s=1, max_attempts=30):
             if state["attempt"] >= max_attempts:
                 logger("[-] BLE GATT app registration failed permanently: %s" % error)
                 return
-            logger("[-] BLE adapter not ready yet (%s), retrying GATT app registration (%d/%d)..."
-                   % (error, state["attempt"], max_attempts))
+            logger(not_ready_message("BLE adapter", error, state["attempt"], max_attempts))
             GLib.timeout_add(int(retry_delay_s * 1000), try_register)
 
         gatt_manager.RegisterApplication(

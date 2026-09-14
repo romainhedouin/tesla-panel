@@ -1,14 +1,9 @@
-import os
-import signal
-
 from gi.repository import GLib
 
 import bt_ble
 import bt_profile
 from panel import Panel
 from protocol import handle_one_command
-
-pid_file = "/home/pi/bt_server.pid"
 
 
 def logger(message):
@@ -26,18 +21,6 @@ def handle_connection(sock, handlers):
 
 
 if __name__ == '__main__':
-
-    # check if the pid file exists
-    if os.path.exists(pid_file):
-        # the pid file exists, so read the process ID from the file
-        with open(pid_file, 'r') as f:
-            pid = int(f.read())
-
-        # try to kill the process
-        try:
-            os.kill(pid, signal.SIGTERM)
-        except OSError:
-            pass
 
     panel = Panel(logger)
     mainloop, profile = bt_profile.register(
