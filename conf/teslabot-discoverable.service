@@ -1,0 +1,13 @@
+[Unit]
+Description=Power on Bluetooth and stay discoverable (Tesla Panel)
+After=bluetooth.service
+Requires=bluetooth.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/bluetoothctl power on
+ExecStart=/usr/bin/bluetoothctl discoverable on
+
+[Install]
+WantedBy=multi-user.target

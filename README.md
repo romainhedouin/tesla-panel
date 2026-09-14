@@ -21,10 +21,10 @@ registration).
 `esp32/` is an in-progress port to run instead of the Pi - see its own
 README for status (compile-verified only, no hardware yet).
 
-There is no CI/CD deploying to the Pi itself: these files are copied by hand
-onto the Pi's home directory (`/home/pi/`) and run via systemd. **A protocol
-or behavior change isn't live until you actually redeploy the changed file
-to the Pi** - nothing in this repo does that for you, and nothing checks
+There is no CI/CD deploying to the Pi itself: `./deploy.sh` copies these files
+onto the Pi's home directory (`/home/pi/`) by hand and restarts the systemd
+service, but nothing runs that automatically - **a protocol or behavior
+change isn't live until you actually run `./deploy.sh`**, and nothing checks
 that the Pi is still in sync with what's committed here. `tests/` (`python3
 -m pytest tests/`) only exercises `protocol.py`, so it catches wire-format
 regressions but nothing hardware- or Bluetooth-related.
@@ -122,21 +122,29 @@ by `pi_side_install.sh`).
 
 ## Deployment
 
-- `teslabot` (bash) is the actual systemd entry point (`conf/teslabot.service`):
-  it keeps Bluetooth powered on and discoverable, keeps a pairing agent
-  (`bt-agent -c NoInputNoOutput`) registered, and respawns `bt_server.py` if
-  it ever exits.
+- Three systemd units (`conf/teslabot*.service`), each supervised
+  independently via `Restart=always`:
+  - `teslabot.service` runs `bt_server.py`.
+  - `teslabot-agent.service` keeps a pairing agent
+    (`bt-agent -c NoInputNoOutput`) registered.
+  - `teslabot-discoverable.service` (a oneshot) powers Bluetooth on and makes
+    it discoverable at boot; `/etc/bluetooth/main.conf`'s `DiscoverableTimeout
+    = 0` (set by `pi_side_install.sh`) is what makes that stick instead of
+    reverting after BlueZ's default 180s.
 - Pairing a new phone with the Pi silently fails (no error anywhere, not even
   in `bluetoothctl paired-devices`) unless that pairing agent is running -
-  if pairing won't complete, check `systemctl status teslabot` before
+  if pairing won't complete, check `systemctl status teslabot-agent` before
   suspecting anything else.
 - The Pi's Bluetooth MAC is hardcoded on the Android side
   (`BluetoothClient.findDevice()`); replacing the Pi means updating that
   constant and rebuilding the app.
 - On a fresh Pi: `./deploy.sh` from this repo copies it onto the Pi, then
-  `ssh teslapi` and run `./pi_side_install.sh` there (packages, sudoers,
-  compiling `rpi-rgb-led-matrix` and its Python bindings, installing the
-  systemd unit). Safe to re-run - most of its steps are no-ops if already done.
+  `ssh teslapi` and run `./pi_side_install.sh` there (packages, compiling
+  `rpi-rgb-led-matrix` and its Python bindings, installing the systemd units).
+  Safe to re-run - most of its steps are no-ops if already done.
+- After that first install, `./deploy.sh` alone is enough for routine code
+  changes: it copies the repo over and restarts `teslabot.service`, so the
+  new code is live immediately - no manual ssh/restart step needed.
 
 ## Troubleshooting
 

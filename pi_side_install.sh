@@ -1,29 +1,13 @@
 #!/bin/bash
 set -e
 
-## Bootstrap passwordless sudo. Every later `sudo` in this script - and
-## teslabot/bt_server.py at runtime, launched by systemd with no TTY - assumes
-## this already works, so it has to happen first and has to actually succeed.
-## `sudo echo foo >> /etc/sudoers` is a classic trap: the `>>` redirect runs in
-## this unprivileged shell, not under sudo, so it silently fails to write to a
-## root-owned file. Writing through `sudo tee` avoids that, and `visudo -c`
-## catches a syntax mistake before it can lock out sudo entirely.
-if ! sudo -n true 2>/dev/null; then
-  read -s -p "sudo password for $(whoami) (used once, to set up passwordless sudo): " SUDO_PW
-  echo
-  echo "$SUDO_PW" | sudo -S true
-fi
-echo "pi ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/010-pi-nopasswd > /dev/null
-sudo chmod 440 /etc/sudoers.d/010-pi-nopasswd
-sudo visudo -c
-
 ## Install the required packages and dependencies.
 ## python3-dbus, python3-gi: bt_server.py registers its RFCOMM/SDP service
 ##   with BlueZ over D-Bus (org.bluez.ProfileManager1) - see bt_profile.py.
 ##   PyBluez's old advertise_service()/sdptool-based approach no longer works
 ##   at all on this BlueZ version (5.82+ removed the legacy /var/run/sdp
 ##   socket interface both of those depend on).
-## bluez-tools: provides bt-agent, used by ./teslabot for pairing.
+## bluez-tools: provides bt-agent, used by teslabot-agent.service for pairing.
 ## python3-pil: not used by our code directly, but rpi-rgb-led-matrix's
 ##   Python bindings unconditionally compile against Pillow's internal
 ##   Imaging.h (bindings/python/rgbmatrix/shims/pillow.c) - apt's python3-pil
@@ -53,11 +37,39 @@ sudo raspi-config nonint do_wifi_country FR
 ## worked around with a venv nothing else here uses.
 sudo python3 -m pip install --break-system-packages /home/pi/rpi-rgb-led-matrix
 
-sudo mv conf/teslabot.service /etc/systemd/system/
+## Bluetooth stays discoverable indefinitely instead of BlueZ's default 180s
+## timeout - teslabot-discoverable.service only runs `discoverable on` once
+## at boot, so without this it'd silently stop being discoverable 3 minutes
+## after every boot. Idempotent: uncomments the (commented-out, by default on
+## Raspberry Pi OS) key if present, otherwise appends it under [General].
+set_bluetooth_config() {
+  local file="/etc/bluetooth/main.conf"
+  if grep -qE '^#?DiscoverableTimeout' "$file"; then
+    sudo sed -i -E 's/^#?DiscoverableTimeout.*/DiscoverableTimeout = 0/' "$file"
+  else
+    sudo sed -i '/^\[General\]/a DiscoverableTimeout = 0' "$file"
+  fi
+}
+set_bluetooth_config
+
+## teslabot.service (bt_server.py, needs root for GPIO), teslabot-agent.service
+## (bt-agent pairing) and teslabot-discoverable.service (power on + stay
+## discoverable) replace the old single `teslabot` bash script's three
+## hand-rolled respawn loops - systemd's own Restart=always/RestartSec
+## supervises each independently, with per-unit status/logs via
+## `systemctl status`/`journalctl -u`.
+sudo cp conf/teslabot.service conf/teslabot-agent.service conf/teslabot-discoverable.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl restart bluetooth
-sudo systemctl enable teslabot.service
-sudo systemctl start teslabot.service
+sudo systemctl enable --now teslabot-discoverable.service teslabot-agent.service teslabot.service
+
+## Lets deploy.sh restart teslabot.service over a plain ssh command (no PTY)
+## after pushing new code, without prompting for a password each time. Scoped
+## to just that one command rather than a blanket NOPASSWD - not because this
+## Pi needs the security, but because that's all deploy.sh actually needs.
+echo "pi ALL=(root) NOPASSWD: /usr/bin/systemctl restart teslabot.service" | sudo tee /etc/sudoers.d/010-teslabot-restart > /dev/null
+sudo chmod 440 /etc/sudoers.d/010-teslabot-restart
+sudo visudo -c
 
 ## Power tuning. This Pi is headless in a car - no HDMI/camera/DSI display is
 ## ever connected and nothing uses onboard audio - so disable the hardware
@@ -106,5 +118,3 @@ else
   sudo systemctl disable --now disable-eth0.service 2>/dev/null || true
   sudo rm -f /etc/systemd/system/disable-eth0.service
 fi
-
-rm -f /home/pi/deploy.sh

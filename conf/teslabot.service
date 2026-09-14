@@ -1,13 +1,13 @@
 [Unit]
-Description=teslabot
-After=bluetooth.target bluetooth.service
-Wants=bluetooth.target
+Description=Tesla Panel Bluetooth server
+After=teslabot-discoverable.service teslabot-agent.service
+Requires=teslabot-discoverable.service teslabot-agent.service
 
 [Service]
-User=pi
-WorkingDirectory=/home/pi/
-ExecStart=/home/pi/teslabot
+WorkingDirectory=/home/pi
+ExecStart=/usr/bin/python3 /home/pi/bt_server.py
 Restart=always
+RestartSec=1
 
 [Install]
 WantedBy=multi-user.target
